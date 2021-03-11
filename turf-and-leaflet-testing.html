@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8" />
+
+		<!-- Leaflet styles and code. -->
+  	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />	
+		<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+
+    <!-- Turf code. -->
+    <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
+    
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta charset="utf-8" />
+
+  </head>
+  <body>
+    
+  	<div id="mapid" style="width: 600px; height: 400px;"></div>
+		<!-- Our web map will get placed into this div element -->
+    
+		<script>
+      
+      // We will display our results in Leaflet,
+      // so let's set up the map.
+      
+      var map = L.map('mapid',
+                    { 
+      								center: [0, 0],
+      								zoom: 1
+    								}  // this object holds map options
+              );
+    
+	    var Esri_WorldShadedRelief = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+				attribution: 'Tiles &copy; Esri &mdash; Source: Esri',
+				maxZoom: 13
+			}).addTo(map);
+      
+      // Let's make circles at different lat-long confluences
+      // We'll use circles instead of point buffers because buffers 
+      // in turf.js aren't yet geodesic.
+      
+      // Each circle (polygon Feature) we make, we'll put it into this array.
+      var circleArray = [];
+      
+      var centerPoint; // the [long, lat] of the present center
+      var currentCircle; // the current circle polygon Feature.
+      var circleRadius = 500; // radius in kilometers
+      
+      var options = {steps: 20, units: 'kilometers'}; // circle options.
+      
+      // This nested loop goes through a variety of combinations of 
+      // longitudes and latitudes, making circles at each, storing
+      // each of the resulting GeoJSON polygon Features in an Array.
+      
+      for (var long = -180; long <= 180; long = long + 25) {
+        for (var lat = -90; lat <= 90; lat = lat + 15) {
+          
+          centerPoint = [long, lat];
+					currentCircle = turf.circle(centerPoint,
+                                      circleRadius,
+                                      options);
+          circleArray.push(currentCircle);
+        }
+      }
+      
+      // Turn an Array of GeoJSON Features into a formal
+      // GeoJSON featureCollection.
+      var circlesGeoJSON = turf.featureCollection(circleArray);
+      
+      // Plot the results.
+      L.geoJson(circlesGeoJSON).addTo(map);
+          
+    </script>
+  
+  </body>
+</html>
